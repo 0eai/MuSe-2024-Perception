@@ -1,0 +1,41 @@
+# sweep.yaml
+program: main_w_sweep.py
+method: grid
+project: MuSe2024_AGGRESSIVE
+entity: ssu
+metric:
+  name: best_val_score
+  goal: maximize
+parameters:
+  early_stopping_patience:
+    value: 10
+  label_dim:
+    value: aggressive
+  task:
+    value: perception
+  feature:
+    values: [ 'w2v-ravdess']
+  encoder:
+    values: [ RNN ]
+  lr:
+    values: [ 0.001, 0.005, 0.0005 ]
+  model_dim:
+    values: [ 64, 128, 512 ]
+  encoder_dropout:
+    values: [ 0.4, 0.1 ]
+  linear_dropout:
+    values: [ 0.1, 0.4 ]
+  encoder_n_layers:
+    values: [ 64]
+  d_fc_out:
+    values: [64, 256]
+  seed:
+    values: [ 101, 102, 103, 104 ]
+command:
+  - ${env}
+  - python3
+  - ${program}
+  - ${args}
+  - --use_gpu
+  - --cache
+  - --device=cuda:0
