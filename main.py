@@ -18,6 +18,8 @@ from model import Model
 from train import train_model
 from utils import Logger, seed_worker, log_results
 
+import wandb
+
 
 
 def parse_args():
@@ -31,7 +33,7 @@ def parse_args():
     parser.add_argument('--label_dim', default="assertiv", choices=config.PERCEPTION_LABELS)
     parser.add_argument('--normalize', action='store_true',
                         help='Specify whether to normalize features (default: False).')
-    parser.add_argument('--encoder', type=str, required=True, choices=ENCODERS,
+    parser.add_argument('--encoder', type=str, required=True, # choices=ENCODERS,
                         help=f'Specify the model encoder from {ENCODERS}.')
     parser.add_argument('--model_dim', type=int, default=64,
                         help='Specify the number of hidden states in the RNN (default: 64).')
@@ -78,7 +80,6 @@ def parse_args():
                         help='Specify seed to be evaluated; only considered when --eval_model is given.')
     parser.add_argument('--device', type=str, default='cpu',
                         help='Specify device')
-
     
     args = parser.parse_args()
     if not (args.result_csv is None) and args.predict:
@@ -88,6 +89,11 @@ def parse_args():
         assert args.eval_seed
     return args
 
+
+
+    #####################
+    # Auto Load on Free GPU
+    #####################
 
 def get_free_gpu():
     # Get the number of GPUs
@@ -103,13 +109,13 @@ def get_free_gpu():
         properties = torch.cuda.get_device_properties(i)
         free_memory.append(properties.total_memory - torch.cuda.memory_allocated(i))
 
-    print('free_memory:', free_memory)
     # Select the GPU with the most free memory
     free_gpu = free_memory.index(max(free_memory))
 
     return free_gpu
 
-
+    # Get the best GPU
+    
 def get_loss_fn(task):
     if task == HUMOR:
         return nn.BCELoss(), 'Binary Crossentropy'
@@ -122,7 +128,7 @@ def get_eval_fn(task):
         return calc_pearsons, 'Pearson'
     elif task == HUMOR:
         return calc_auc, 'AUC'
-    
+
 
 def main(args):
     # ensure reproducibility
@@ -147,58 +153,41 @@ def main(args):
     eval_fn, eval_str = get_eval_fn(args.task)
 
     if args.eval_model is None:  # Train and validate for each seed
-        seeds = range(args.seed, args.seed + args.n_seeds)
+        seed = args.seed
+        # seeds = range(args.seed, args.seed + args.n_seeds)    ## remove seed iteration since sweep agent will select it.
         val_losses, val_scores, best_model_files, test_scores = [], [], [], []
 
-        for seed in seeds:
-            torch.manual_seed(seed)
-            data_loader = {}
-            for partition,dataset in datasets.items():  # one DataLoader for each partition
-                batch_size = args.batch_size if partition == 'train' else 2 * args.batch_size
-                shuffle = True if partition == 'train' else False  # shuffle only for train partition
-                data_loader[partition] = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=shuffle,
-                                                                     num_workers=4,
-                                                                     worker_init_fn=seed_worker,
-                                                                     collate_fn=custom_collate_fn)
-            
-            model = Model(args)
-
-            print('=' * 50)
-            print(f'Training model... [seed {seed}] for at most {args.epochs} epochs')
-
-            val_loss, val_score, best_model_file = train_model(args.task, model, data_loader, args.epochs,
-                                                               args.lr, args.paths['model'], seed, use_gpu=args.use_gpu,
-                                                               loss_fn=loss_fn, eval_fn=eval_fn,
-                                                               eval_metric_str=eval_str,
-                                                               regularization=args.regularization,
-                                                               early_stopping_patience=args.early_stopping_patience, device=args.device)
-            # restore best model encountered during training
-            model = torch.load(best_model_file)
-
-            if not args.predict:  # run evaluation only if test labels are available
-                test_loss, test_score = evaluate(args.task, model, data_loader['test'], loss_fn=loss_fn,
-                                                 eval_fn=eval_fn, use_gpu=args.use_gpu, device=args.device)
-                test_scores.append(test_score)
-                print(f'[Test {eval_str}]:  {test_score:7.4f}')
-
-            val_losses.append(val_loss)
-            val_scores.append(val_score)
-
-            best_model_files.append(best_model_file)
-
-        best_idx = val_scores.index(max(val_scores))  # find best performing seed
+        # for seed in seeds:
+        torch.manual_seed(seed)
+        data_loader = {}
+        for partition,dataset in datasets.items():  # one DataLoader for each partition
+            batch_size = args.batch_size if partition == 'train' else 2 * args.batch_size
+            shuffle = True if partition == 'train' else False  # shuffle only for train partition
+            data_loader[partition] = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=shuffle,
+                                                                    num_workers=4,
+                                                                    worker_init_fn=seed_worker,
+                                                                    collate_fn=custom_collate_fn)
+        
+        model = Model(args)
+        print(model) # TODO delete
 
         print('=' * 50)
-        print(f'Best {eval_str} on [Val] for seed {seeds[best_idx]}: '
-              f'[Val {eval_str}]: {val_scores[best_idx]:7.4f}'
-              f"{f' | [Test {eval_str}]: {test_scores[best_idx]:7.4f}' if not args.predict else ''}")
-        print('=' * 50)
+        print(f'Training model... [seed {seed}] for at most {args.epochs} epochs')
 
-        model_file = best_model_files[best_idx]  # best model of all of the seeds
-        if not args.result_csv is None:
-            log_results(args.result_csv, params=args, seeds = list(seeds), metric_name=eval_str,
-                        model_files=best_model_files, test_results=test_scores, val_results=val_scores,
-                        best_idx=best_idx)
+        val_loss, val_score, best_model_file = train_model(args.task, model, data_loader, args.epochs,
+                                                            args.lr, args.paths['model'], seed, use_gpu=args.use_gpu,
+                                                            loss_fn=loss_fn, eval_fn=eval_fn,
+                                                            eval_metric_str=eval_str,
+                                                            regularization=args.regularization,
+                                                            early_stopping_patience=args.early_stopping_patience, device=args.device)
+        # restore best model encountered during training
+        model = torch.load(best_model_file)
+
+        if not args.predict:  # run evaluation only if test labels are available
+            test_loss, test_score = evaluate(args.task, model, data_loader['test'], loss_fn=loss_fn,
+                                                eval_fn=eval_fn, use_gpu=args.use_gpu, device=args.device)
+            test_scores.append(test_score)
+            print(f'[Test {eval_str}]:  {test_score:7.4f}')
 
     else:  # Evaluate existing model (No training)
         model_file = os.path.join(args.paths['model'], f'model_{args.eval_seed}.pth')
@@ -240,11 +229,23 @@ if __name__ == '__main__':
 
     if args.use_gpu:
         device_id = get_free_gpu()
-        print('device_id:', device_id)
-        args.device = f'cuda:{device_id}'
+        args.device = 'cuda'
+        # args.device = f'cuda:{device_id}'
         
-    args.log_file_name =  '{}_{}_[{}]_[{}_{}_{}_{}]_[{}_{}]'.format('RNN', datetime.now(tz=tz.gettz()).strftime("%Y-%m-%d-%H-%M"), args.feature.replace(os.path.sep, "-"),
-                                                 args.model_dim, args.encoder_n_layers, args.rnn_bi, args.d_fc_out, args.lr,args.batch_size)
+    ## initial wandb. A project name will follow the given name in .yaml
+    wandb.init()
+
+    ## update selected hyperparameters by sweep agent into args for compatibility between original code and wandb
+    for key, value in wandb.config.items():
+        if hasattr(args, key):
+            setattr(args, key, value)
+
+    args.log_file_name =  '{}_{}_[{}]_[{}_{}_{}_{}]_[{}_{}]_{}'.format(args.encoder, datetime.now(tz=tz.gettz()).strftime("%Y-%m-%d-%H-%M"), args.feature.replace(os.path.sep, "-"),
+                                                 args.model_dim, args.encoder_n_layers, args.rnn_bi, args.d_fc_out, args.lr,args.batch_size, args.seed)
+
+    ## change the name of this run
+    wandb.run.name = args.log_file_name
+    wandb.run.save()
 
     # adjust your paths in config.py
     task_id = args.task if args.task != PERCEPTION else os.path.join(args.task, args.label_dim)
@@ -269,5 +270,3 @@ if __name__ == '__main__':
     print(' '.join(sys.argv))
 
     main(args)
-
-    #os.system(f"rm -r {config.OUTPUT_PATH}")
