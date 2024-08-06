@@ -33,7 +33,10 @@ The ``main.py`` script is used for training and evaluating models.  Most importa
 * Predict labels for the test set: ``--predict``
 * Specific parameter for MuSe-Perception: ``label_dim`` (one of the 16 labels, cf. ``config.py``), ``win_len`` and ``hop_len`` for segmentation.
 
-For more details, please see the ``parse_args()`` method in ``main.py``.
+The ``main_multi_att.py`` script is used for training and evaluating similar attribute grouping models.  The followings are the new or modified options from ``main.py``:
+* ``--label_dims``: choose a similar attribute group with label_dims concatenated with dashes, as defined in ``config.py`` 
+
+For more details, please see the ``parse_args()`` method in ``main.py`` and ``main_multi_att.py``.
 
 ## Reproducing the baselines 
 Please note that exact reproducibility can not be expected due to dependence on hardware. 
@@ -59,6 +62,14 @@ Then, ``late_fusion.py`` merges these predictions:
   The model id is a folder under the ``{config.PREDICTION_DIR}/humor`` for humor and ``{config.PREDICTION_DIR}/perception/{label_dim}`` for perception. 
   It is the parent folder of the folders named after the seeds (e.g. ``101``). These contain the files ``predictions_devel.csv`` and ``predictoins_test.csv``
 * ``--seeds``: seeds for the respective model IDs.  
+
+
+### Unimodal Feature Fusion
+We designed an unimodal feature fusion to integrate vision, audio, text modalities. In this method, pretrained unimodal models are used as the backbone, with linear layers attached to these backbones.
+The ``feature_fusion.py`` script is used for training and evaluating unimodal feature fusion.  The followings are the new or modified options from ``main.py``:
+* ``--pt_vision_model_name``: choose an experiment name of the pretrained unimodal model trained on vision. 
+* ``--pt_audio_model_name``: choose an experiment name of the pretrained unimodal model trained on audio. 
+* ``--pt_text_model_name``: choose an experiment name of the pretrained unimodal model trained on text. 
 
 ### Model Checkpoints
 Checkpoints for the [Perception Sub-Challenge](https://mediastore.rz.uni-augsburg.de/get/Bm2Ds0KUNd/)
