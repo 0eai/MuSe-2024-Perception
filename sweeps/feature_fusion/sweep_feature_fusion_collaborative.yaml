@@ -1,0 +1,41 @@
+# sweep.yaml
+program: feature_fusion.py
+method: grid
+project: SSU_MuSe2024_COLLABORATIVE
+entity: feelsgood_muse
+metric:
+  name: best_val_score
+  goal: maximize
+parameters:
+  early_stopping_patience:
+    value: 20
+  label_dim:
+    value: collaborative
+  task:
+    value: perception
+  pt_vision_model_name:
+    value: TF_2024-07-12-18-43_[vit-fer]_[128_4_False_64]_[0.001_256]_102
+  pt_audio_model_name:
+    value: RNN_2024-06-14-11-48_[w2v-msp]_[128_16_False_64]_[0.001_256]_102
+  pt_text_model_name:
+    value: RNN_2024-07-07-13-41_[emotion-english-distilroberta-base]_[512_2_False_256]_[0.005_256]_103
+  fusion_type:
+    value: feature_fusion
+  feature_level:
+    value: encoder
+  epochs:
+    value: 100
+  lr:
+    values: [ 0.005, 0.001, 0.0005, 0.0001 ]
+  linear_dropout:
+    values: [ 0.0, 0.2, 0.5 ]
+  d_fc_out:
+    values: [ 64, 128, 256, 512 ]
+  seed:
+    values: [ 101, 102, 103, 104 ]
+command:
+  - ${env}
+  - python3
+  - ${program}
+  - ${args}
+  - --use_gpu

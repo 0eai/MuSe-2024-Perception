@@ -59,7 +59,7 @@ MULTI_ATT_SELFASSURED = 'confident-independent-leader_like'
 
 current_timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S-%f")[:23]
 
-EXP_PATH = '~/MuSe-2024/outs'
+EXP_PATH = 'outs'
 
 OUTPUT_PATH = os.path.join(EXP_PATH, 'results')
 LOG_FOLDER = os.path.join(OUTPUT_PATH, 'log_muse')

@@ -1,0 +1,43 @@
+# sweep.yaml
+program: main_multi_att.py
+method: grid
+project: SSU_MuSe2024_FORCEFUL
+entity: feelsgood_muse
+metric:
+  name: best_val_scores_mean
+  goal: maximize
+parameters:
+  early_stopping_patience:
+    value: 10
+  label_dims:
+    value:   ## multi-attribute on single model
+      - 'collaborative-friendly-good_natured-kind-likeable-sincere-warm'
+  task:
+    value: perception
+  feature:
+    values: ['egemaps']
+  encoder:
+    values: [ RNN, TF]
+  nhead:
+    value: 2
+  lr:
+    values: [ 0.0001, 0.0005 ]
+  model_dim:
+    values: [ 128, 256, 512 ]
+  encoder_dropout:
+    values: [ 0.0, 0.1, 0.2 ]
+  linear_dropout:
+    values: [ 0.1, 0.2 ]
+  encoder_n_layers:
+    values: [ 1, 2, 4]
+  seed:
+    values: [ 101, 102, 103, 104 ]
+command:
+  - ${env}
+  - python3
+  - ${program}
+  - ${args}
+  - --use_gpu
+  - --cache
+  - --device=cuda:1
+  - --normalize

@@ -1,0 +1,41 @@
+# sweep.yaml
+program: feature_fusion.py
+method: grid
+project: SSU_MuSe2024_ASSERTIV
+entity: feelsgood_muse
+metric:
+  name: best_val_score
+  goal: maximize
+parameters:
+  early_stopping_patience:
+    value: 20
+  label_dim:
+    value: assertiv
+  task:
+    value: perception
+  pt_vision_model_name:
+    value: TF_2024-07-12-18-03_[vit-fer]_[64_16_False_64]_[0.0001_256]_103
+  pt_audio_model_name:
+    value: RNN_2024-07-12-18-02_[w2v-msp]_[512_16_False_64]_[0.001_256]_101
+  pt_text_model_name:
+    value: TF_CP_2024-07-01-12-11_[twitter-roberta-base-sentiment]_[128_2_False_64]_[0.001_256]_103
+  fusion_type:
+    value: feature_fusion
+  feature_level:
+    value: encoder
+  epochs:
+    value: 100
+  lr:
+    values: [ 0.005, 0.001, 0.0005, 0.0001 ]
+  linear_dropout:
+    values: [ 0.0, 0.2, 0.5 ]
+  d_fc_out:
+    values: [ 64, 128, 256, 512 ]
+  seed:
+    values: [ 101, 102, 103, 104 ]
+command:
+  - ${env}
+  - python3
+  - ${program}
+  - ${args}
+  - --use_gpu
