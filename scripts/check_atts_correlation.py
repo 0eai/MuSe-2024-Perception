@@ -2,7 +2,7 @@ import sys
 sys.path.append("../")
 
 import argparse
-# import pandas as pd
+import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
@@ -57,7 +57,6 @@ def compute_atts_correlation_matrix():
 
 def main(args):
     
-    print(args.abs_threshold, PATH_TO_LABELS)
     corr = compute_atts_correlation_matrix()
 
     plt.figure(figsize=(10, 8))
