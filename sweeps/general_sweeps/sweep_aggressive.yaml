@@ -1,8 +1,8 @@
 # sweep.yaml
-program: main_w_sweep.py
+program: main.py
 method: grid
 project: MuSe2024_AGGRESSIVE
-entity: ssu
+entity: feelsgood_muse
 metric:
   name: best_val_score
   goal: maximize
@@ -14,23 +14,23 @@ parameters:
   task:
     value: perception
   feature:
-    values: [ 'w2v-ravdess']
+    values: [ 'ds', 'egemaps', 'w2v-msp', 'faus', 'facenet512', 'vit-fer', 'bert-b', 'bert-l', 'roberta-sent', 'roberta-twt-sent', 'canine-c', 'distilroberta-emo', 'roberta-go-emo' ]
   encoder:
-    values: [ RNN ]
+    values: [ RNN, TF ]
   lr:
     values: [ 0.001, 0.005, 0.0005 ]
   model_dim:
-    values: [ 64, 128, 512 ]
+    values: [ 64, 128, 256, 512 ]
   encoder_dropout:
-    values: [ 0.4, 0.1 ]
+    values: [ 0.4, 0.1, 0.0 ]
   linear_dropout:
     values: [ 0.1, 0.4 ]
   encoder_n_layers:
-    values: [ 64]
+    values: [ 4, 8, 16, 32, 64]
   d_fc_out:
-    values: [64, 256]
+    values: [64, 128, 256]
   seed:
-    values: [ 101, 102, 103, 104 ]
+    values: [ 101, 102, 103, 104, 105 ]
 command:
   - ${env}
   - python3

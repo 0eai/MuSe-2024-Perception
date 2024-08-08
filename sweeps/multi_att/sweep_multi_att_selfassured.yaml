@@ -1,7 +1,7 @@
 # sweep.yaml
 program: main_multi_att.py
 method: grid
-project: SSU_MuSe2024_SELFASSURED
+project: MuSe2024_SELFASSURED
 entity: feelsgood_muse
 metric:
   name: best_val_scores_mean

@@ -1,8 +1,8 @@
 # sweep.yaml
-program: main_w_sweep.py
+program: main.py
 method: grid
 project: MuSe2024_WARM
-entity: ssu
+entity: feelsgood_muse
 metric:
   name: best_val_score
   goal: maximize
@@ -14,7 +14,7 @@ parameters:
   task:
     value: perception
   feature:
-    values: [ 'w2v-ravdess']
+    values: [ 'ds', 'egemaps', 'w2v-msp', 'faus', 'facenet512', 'vit-fer', 'bert-b', 'bert-l', 'roberta-sent', 'roberta-twt-sent', 'canine-c', 'distilroberta-emo', 'roberta-go-emo' ]
   encoder:
     values: [ RNN ]
   lr:
@@ -38,4 +38,4 @@ command:
   - ${args}
   - --use_gpu
   - --cache
-  - --device=cuda:3
+  - --device=cuda:0
