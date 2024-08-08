@@ -42,3 +42,5 @@ python scripts/main.py --task perception --modality transcriptions --hf_model j-
 
 # Using RoBERTa model for GoEmotions dataset
 python scripts/main.py --task perception --modality transcriptions --hf_model SamLowe/roberta-base-go_emotions --feature_segment roberta-go-emo --step_size 0.5 --device cuda
+
+deactivate
